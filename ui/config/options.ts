@@ -67,7 +67,12 @@ export interface SubtitleOptions {
     strokeWidth?: number;
 }
 
-
+export const defaultSubtitleOptions: SubtitleOptions = {
+    maxLen: 25, // Longitud máxima del subtítulo
+    fontName: 'Roboto',
+    fontColor: 'white', // Color de la fuente del subtítulo
+    strokeWidth: 10 // Ancho del borde del subtítulo (0 para no tener borde)
+};
 /**
  * Options for AI image generation
  * (Note: same as backend model, so it is not separate)
@@ -96,8 +101,8 @@ export interface APIVoiceOptions {
 export const defaultVideoOptions: VideoOptions = {
     aiType: "OllamaAIGen",
     aiModel: "llama3.2",
-    voiceGenType: "BuiltinTTS",
-    imageGenType: "GoogleScraper",
+    voiceGenType: "NeetsTTS",
+    imageGenType: "Pexels",
     orientation: "vertical",
     useBgMusic: true,
     useBgVideo: true,
@@ -107,6 +112,7 @@ export const defaultVideoOptions: VideoOptions = {
         disableSubtitles: false,
         useMock: false,
     },
+    subtitleOptions: defaultSubtitleOptions
 };
 
 // Backend models

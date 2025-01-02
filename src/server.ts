@@ -261,7 +261,6 @@ export async function runAPIServer() {
 
             const data: APIVideoData = json as APIVideoData;
             const options = data.options;
-
             const task = await genVideoWithJson(
                 data.data,
                 {

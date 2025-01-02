@@ -870,7 +870,6 @@ async function cli() {
             changePhotos: changePhotos, disableTTS: disableTTS, useMock: useMock, disableSubtitles: disableSubtitles
         },
     };
-
     // Check if user wants to use json file
     if (options.jsonFile) {
         const jsonFile = options.jsonFile;

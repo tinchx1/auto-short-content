@@ -10,14 +10,14 @@ import path from "path";
  * Subtitle generation
  */
 export class SubtitleGen {
-    static async transcribeSrt(gen: VideoGen, audio16kFile: string, maxLen: number, srtFile: string, resPath: string, modelPath?: string) : Promise<any> {  
+    static async transcribeSrt(gen: VideoGen, audio16kFile: string, maxLen: number, srtFile: string, resPath: string, modelPath?: string): Promise<any> {
         throw new Error("Method 'transcribeSrt' must be implemented");
     }
 }
 
 /**
  * Whisper Subtitles
- */ 
+ */
 export class WhisperSubtitles extends SubtitleGen {
     /** Default ggml model */
     static DEFAULT_MODEL = "ggml-base.en.bin";
@@ -31,7 +31,7 @@ export class WhisperSubtitles extends SubtitleGen {
      * @param resPath Resource path
      * @param modelPath Model path (optional)
      */
-    static async transcribeSrt(gen: VideoGen, audio16kFile: string, maxLen: number, srtFile: string, resPath: string, modelPath?: string) : Promise<any> {  
+    static async transcribeSrt(gen: VideoGen, audio16kFile: string, maxLen: number, srtFile: string, resPath: string, modelPath?: string): Promise<any> {
         const transcript = await this.transcribe(gen, audio16kFile, maxLen, resPath, modelPath);
         await this.convertTranscriptionToSrt(transcript, srtFile);
     }
@@ -44,17 +44,17 @@ export class WhisperSubtitles extends SubtitleGen {
      * @param resPath Resource path
      * @param modelPath Model path (optional)
      */
-    static async transcribe(gen: VideoGen, audio16kFile: string, maxLen: number, resPath: string, modelPath?: string) : Promise<any> {        
+    static async transcribe(gen: VideoGen, audio16kFile: string, maxLen: number, resPath: string, modelPath?: string): Promise<any> {
         const model = modelPath ?? path.join(resPath, "models", WhisperSubtitles.DEFAULT_MODEL);
         const wav = audio16kFile;
-        
+
         const whisper = new Whisper(model);
         const pcm = read_wav(wav);
-        
+
         const task = await whisper.transcribe(pcm, {
-             language: "en",
-             max_len: maxLen,
-             token_timestamps: true,
+            language: "en",
+            max_len: maxLen,
+            token_timestamps: true,
         });
 
         task.on("transcribed", (result) => {
@@ -65,22 +65,22 @@ export class WhisperSubtitles extends SubtitleGen {
 
         const result = await task.result;
         // gen.log("[whisper] Final Transcription result: " + result);
-        
+
         await whisper.free();
         gen.log("[whisper] Maunally freed whisper");
-        
+
         return result;
 
         function read_wav(file: string): Float32Array {
             const { sampleRate, channelData } = decode(fs.readFileSync(file));
-        
+
             if (sampleRate !== 16000) {
                 throw new Error(`Invalid sample rate: ${sampleRate}`);
             }
             if (channelData.length !== 1) {
                 throw new Error(`Invalid channel count: ${channelData.length}`);
             }
-        
+
             return channelData[0];
         }
     }
@@ -94,13 +94,17 @@ export class WhisperSubtitles extends SubtitleGen {
     static async convertTranscriptionToSrt(transcript: any, srtFile: string) {
         let srt = "";
         let idx = 1;
+        const maxLineLength = 25;
+
         for (const line of transcript) {
             const from = formatTime(line.from);
             const to = formatTime(line.to);
             const text = line.text.trim();
+            const wrappedText = wrapText(text, maxLineLength);
+
             srt += `${idx}\n`;
             srt += `${from} --> ${to}\n`;
-            srt += `${text}\n\n`;
+            srt += `${wrappedText}\n\n`;
             idx += 1;
         }
 
@@ -112,7 +116,27 @@ export class WhisperSubtitles extends SubtitleGen {
             const milliseconds = date.getUTCMilliseconds().toString().padStart(3, "0");
             return `${hours}:${minutes}:${seconds},${milliseconds}`;
         }
+        function wrapText(text: string, maxLineLength: number): string {
+            const words = text.split(" ");
+            const lines = [];
+            let currentLine = "";
+
+            for (const word of words) {
+                if ((currentLine + word).length <= maxLineLength) {
+                    currentLine += (currentLine ? " " : "") + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+
+            return lines.join("\n");
+        }
 
         fs.writeFileSync(srtFile, srt);
     }
+
 }

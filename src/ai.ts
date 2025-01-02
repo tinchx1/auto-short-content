@@ -158,7 +158,7 @@ export class OpenAIGen extends AIGen {
                     messages: messages as OpenAI.ChatCompletionMessageParam[],
                 });
 
-                let res = response.choices[0].message.content ?? "";
+                const res = response.choices[0].message.content ?? "";
 
                 messages.push({ role: 'assistant', content: res });
 
